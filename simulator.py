@@ -197,7 +197,7 @@ class Wet1Proxy(object):
 
     def _query_proc(self, q):
         self._proc.stdin.write(q + '\n')
-        # self._proc.stdin.flush()
+        self._proc.stdin.flush()
         try:
             return self._queue.get(timeout=1)
         except Queue.Empty:
@@ -256,7 +256,7 @@ class SimulatedWet1Proxy:
             raise SimulatedWet1ProxyException(a, b)
 
     def _runOnBoth(self, func):
-        self._assertEqual(func(self._p), func(self._s))
+        self._assertEqual(func(self._p).strip(), func(self._s).strip())
 
     def Init(self, k):
         self._runOnBoth(lambda x: x.Init(k))
