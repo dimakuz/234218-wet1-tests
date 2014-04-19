@@ -178,6 +178,9 @@ class Wet1Sim(object):
         del self.firms
         return 'Quit done.\n'
 
+    def Comment(self, c):
+        return '#%s\n' % c
+
 
 PATH_TO_EXEC = os.environ['WET1_EXEC']
 
@@ -250,6 +253,9 @@ class Wet1Proxy(object):
     def Quit(self):
         return self._query_proc('Quit')
 
+    def Comment(self, c):
+        return self._query_proc('#%s' % c)
+
 
 class SimulatedWet1ProxyException(RuntimeError):
     def __init__(self, a, b):
@@ -277,8 +283,8 @@ class SimulatedWet1Proxy:
     def _runOnBoth(self, func):
         sim_output = func(self._s).strip()
         proxy_output = func(self._p).strip()
-        self.sim_stdout.writelines([sim_output])
-        self.proxy_stdout.writelines([proxy_output])
+        self.sim_stdout.write(sim_output + '\n')
+        self.proxy_stdout.write(proxy_output + '\n')
         self._assertEqual(proxy_output, sim_output)
 
     def Init(self, k):
@@ -313,6 +319,9 @@ class SimulatedWet1Proxy:
 
     def Quit(self):
         self._runOnBoth(lambda x: x.Quit())
+
+    def Comment(self, c):
+        self._runOnBoth(lambda x: x.Comment(c))
 
 if __name__ == '__main__':
     pass
