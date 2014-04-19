@@ -3,8 +3,8 @@
 How-To:
 -------
 1. set environment variable WET1_EXEC to path to wet1 exec file
-..* on Linux: export WET1_EXEC=/path/to/exec
-..* on Windows: http://www.computerhope.com/issues/ch000549.htm
+ * on Linux: export WET1_EXEC=/path/to/exec
+ * on Windows: http://www.computerhope.com/issues/ch000549.htm
 2. run simpletests.py
 3. (optional, Linux only) to enable valgrind collection set WET1_VALGRIND env variable to 1.
 
