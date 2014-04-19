@@ -9,6 +9,7 @@ How-To:
 3. (optional, Linux only) to enable valgrind collection set WET1_VALGRIND env variable to 1.
 
 The tests generate a directory with all the outputs in test-output/simple/YYYYMMDDHHMMSS/, the following files are created:
+
 1. Wet1TestCases-commands-NUM input of the test NUM
 2. Wet1TestCases-out-actual-NUM output of the provided exec to test NUM
 3. Wet1TestCases-out-expected-NUM output that was expected for thest NUM
