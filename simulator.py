@@ -162,7 +162,8 @@ class Wet1Sim(object):
         return 'HighestPaid: Success %d\n' % id
 
     def CutBacks(self, cid, thd, cut):
-        if (cid < 0 or cid >= len(self.firms) or thd < 0 or cut < 0):
+        if (cid < 0 or cid >= len(self.firms) or thd < 0 or cut < 0
+                or cut > thd):
             return 'CutBacks: Invalid_input\n'
         try:
             if len(self.firms[cid].employees) < 1:
