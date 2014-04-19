@@ -1,15 +1,36 @@
 #!/usr/bin/python
+import datetime
+import os
 import unittest
 import simulator as sim
+
+glob_ctr = 0
+DO_VALGRIND = int(os.environ.get('WET1_VALGRIND', 0)) == 1
 
 
 class Wet1TestCases(unittest.TestCase):
     def setUp(self):
-        self.sp = sim.SimulatedWet1Proxy()
+        global glob_ctr
+        global TEST_OUTPUT_PATH
+        global DO_VALGRIND
+        cls_name = self.__class__.__name__
+        make_name = lambda infix: os.path.join(TEST_OUTPUT_PATH,
+                                               '%s-%s-%02d' % (cls_name,
+                                                               infix,
+                                                               glob_ctr))
+        self.sp = sim.SimulatedWet1Proxy(command_log=make_name('commands'),
+                                         valgrind=DO_VALGRIND,
+                                         valgrind_log=make_name('valgrind'),
+                                         proxy_output=make_name('out-actual'),
+                                         sim_output=make_name('out-expected'))
+        glob_ctr += 1
 
     def tearDown(self):
-        self.sp._p._proc.kill()
+        # self.sp._p._proc.kill()
+        self.sp.Quit()
+        self.sp._p._proc.stdin.write('\n\n')
         self.sp._p._proc.wait()
+        del self.sp
 
     def testInitOnce(self):
         self.sp.Init(10)
@@ -181,4 +202,8 @@ class Wet1TestCases(unittest.TestCase):
 
 
 if __name__ == '__main__':
+    timestamp = datetime.datetime.now().strftime('%Y%m%d%H%M%S')
+    TEST_OUTPUT_PATH = os.path.join(os.getcwd(), 'test-output',
+                                    'simple', timestamp)
+    os.makedirs(TEST_OUTPUT_PATH)
     unittest.main()

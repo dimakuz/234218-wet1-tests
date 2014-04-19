@@ -39,7 +39,7 @@ class RecruitmentFirm(Firm):
     def find_by_salary(self, salary):
         candidates = list(filter(lambda x: x.salary <= salary, self.employees))
         if len(candidates) > 0:
-            return sorted(candidates, key=lambda x: (x.salary, x.id))[-1]
+            return max(candidates, key=lambda x: (x.salary, x.id))
 
 
 class HighTechFirm(Firm):
@@ -62,7 +62,7 @@ class HighTechFirm(Firm):
 
 
 class Wet1Sim(object):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         self._init = False
         self.ged = {}
 
@@ -165,6 +165,8 @@ class Wet1Sim(object):
         if (cid < 0 or cid >= len(self.firms) or thd < 0 or cut < 0):
             return 'CutBacks: Invalid_input\n'
         try:
+            if len(self.firms[cid].employees) < 1:
+                raise RuntimeError()
             self.firms[cid].cutbacks(thd, cut)
         except (RuntimeError):
             return 'CutBacks: Failure\n'
@@ -181,23 +183,35 @@ PATH_TO_EXEC = os.environ['WET1_EXEC']
 
 
 class Wet1Proxy(object):
-    def __init__(self):
-        self._proc = subprocess.Popen([PATH_TO_EXEC],
+    def __init__(self, command_log=None, valgrind=False, valgrind_log=None):
+        cmd = []
+        if valgrind:
+            cmd = ['valgrind', '--leak-check=full']
+            if valgrind_log:
+                cmd.append('--log-file=%s' % valgrind_log)
+        cmd.append(PATH_TO_EXEC)
+        self._proc = subprocess.Popen(cmd, bufsize=1,
                                       stdin=subprocess.PIPE,
-                                      stdout=subprocess.PIPE,
-                                      bufsize=1)
+                                      stdout=subprocess.PIPE)
         self._queue = Queue.Queue()
 
         def enqueue():
             for line in iter(self._proc.stdout.readline, b''):
                 self._queue.put(line)
+
         self._thread = threading.Thread(target=enqueue)
         self._thread.daemon = True
         self._thread.start()
+        if command_log:
+            self._command_log = open(command_log, 'w')
+        else:
+            self._command_log = None
 
     def _query_proc(self, q):
         self._proc.stdin.write(q + '\n')
         self._proc.stdin.flush()
+        if self._command_log:
+            self._command_log.write(q + '\n')
         try:
             return self._queue.get(timeout=1)
         except Queue.Empty:
@@ -247,16 +261,25 @@ class SimulatedWet1ProxyException(RuntimeError):
 
 
 class SimulatedWet1Proxy:
-    def __init__(self):
-        self._p = Wet1Proxy()
-        self._s = Wet1Sim()
+    def __init__(self, proxy_output=None, sim_output=None, *args, **kwargs):
+        self.proxy_stdout, self.sim_stdout = None, None
+        if proxy_output:
+            self.proxy_stdout = open(proxy_output, 'w')
+        if sim_output:
+            self.sim_stdout = open(sim_output, 'w')
+        self._p = Wet1Proxy(*args, **kwargs)
+        self._s = Wet1Sim(*args, **kwargs)
 
     def _assertEqual(self, a, b):
         if (a != b):
             raise SimulatedWet1ProxyException(a, b)
 
     def _runOnBoth(self, func):
-        self._assertEqual(func(self._p).strip(), func(self._s).strip())
+        sim_output = func(self._s).strip()
+        proxy_output = func(self._p).strip()
+        self.sim_stdout.writelines([sim_output])
+        self.proxy_stdout.writelines([proxy_output])
+        self._assertEqual(proxy_output, sim_output)
 
     def Init(self, k):
         self._runOnBoth(lambda x: x.Init(k))
@@ -287,6 +310,9 @@ class SimulatedWet1Proxy:
 
     def CutBacks(self, cid, thd, cut):
         self._runOnBoth(lambda x: x.CutBacks(cid, thd, cut))
+
+    def Quit(self):
+        self._runOnBoth(lambda x: x.Quit())
 
 if __name__ == '__main__':
     pass
