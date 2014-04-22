@@ -284,8 +284,10 @@ class SimulatedWet1Proxy:
     def _runOnBoth(self, func):
         sim_output = func(self._s).strip()
         proxy_output = func(self._p).strip()
-        self.sim_stdout.write(sim_output + '\n')
-        self.proxy_stdout.write(proxy_output + '\n')
+        if self.sim_stdout:
+            self.sim_stdout.write(sim_output + '\n')
+        if self.proxy_stdout:
+            self.proxy_stdout.write(proxy_output + '\n')
         self._assertEqual(proxy_output, sim_output)
 
     def Init(self, k):

@@ -36,9 +36,10 @@ class Wet1TestCases(unittest.TestCase):
         glob_ctr += 1
 
     def tearDown(self):
-        # self.sp._p._proc.kill()
-        self.sp.Quit()
+        self.sp._p.Quit()
         self.sp._p._proc.stdin.write('\n\n')
+        self.sp._p._proc.stdin.flush()
+        self.sp._p._proc.kill()
         self.sp._p._proc.wait()
         del self.sp
 
